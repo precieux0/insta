@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class UltimateInstagramBot:
     def __init__(self):
         self.setup_driver()
-        self.wait = WebDriverWait(self.driver, 20)
+        self.wait = WebDriverWait(self.driver, 25)
         
         # Compte Instagram
         self.username = os.getenv('INSTAGRAM_USERNAME')
@@ -57,7 +57,7 @@ class UltimateInstagramBot:
         logger.info("🤖 BOT INSTAGRAM ULTIME INITIALISÉ - Objectif 10k followers")
 
     def setup_driver(self):
-        """Configuration avancée du navigateur"""
+        """CONFIGURATION CHROME ULTRA-STEALTH"""
         chrome_options = Options()
         
         # Configuration Render
@@ -67,76 +67,117 @@ class UltimateInstagramBot:
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--window-size=1920,1080')
         
-        # Furtivité
-        chrome_options.add_argument('--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1')
+        # STEALTH CONFIG - CRITIQUE !
+        chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+        chrome_options.add_argument('--disable-features=VizDisplayCompositor')
+        chrome_options.add_argument('--disable-background-timer-throttling')
+        chrome_options.add_argument('--disable-backgrounding-occluded-windows')
+        chrome_options.add_argument('--disable-renderer-backgrounding')
+        
+        # Proxy-like behavior
+        chrome_options.add_argument('--disable-web-security')
+        chrome_options.add_argument('--allow-running-insecure-content')
         
         self.driver = webdriver.Chrome(options=chrome_options)
+        
+        # Execute stealth scripts
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        self.driver.execute_script("Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]})")
+        self.driver.execute_script("Object.defineProperty(navigator, 'languages', {get: () => ['fr-FR', 'fr', 'en-US', 'en']})")
 
     def login(self):
-        """Connexion robuste à Instagram"""
+        """CONNEXION INSTAGRAM ANTI-DÉTECTION AMÉLIORÉE"""
         try:
-            logger.info("🔐 CONNEXION INSTAGRAM EN COURS...")
+            logger.info("🔐 CONNEXION INSTAGRAM AVEC STEALTH...")
             
-            self.driver.get("https://www.instagram.com/accounts/login/")
-            time.sleep(4)
-
-            # Accepter les cookies
+            # 1. Aller d'abord sur Instagram normal
+            self.driver.get("https://www.instagram.com/")
+            time.sleep(5)
+            
+            # 2. Attendre le chargement et cliquer sur connexion
             try:
-                cookie_button = self.driver.find_element(By.XPATH, "//button[contains(text(), 'Autoriser')]")
-                cookie_button.click()
-                time.sleep(2)
+                login_link = self.wait.until(
+                    EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/accounts/login/')]"))
+                )
+                login_link.click()
+                time.sleep(3)
             except:
-                pass
+                # Si déjà sur page de login
+                self.driver.get("https://www.instagram.com/accounts/login/")
+                time.sleep(4)
 
-            # Nom d'utilisateur
-            username_field = self.wait.until(EC.presence_of_element_located((By.NAME, "username")))
+            # 3. Remplir les champs TRÈS lentement
+            username_field = self.wait.until(
+                EC.presence_of_element_located((By.NAME, "username"))
+            )
+            
+            # Effacer et taper comme un humain
             username_field.clear()
-            self.slow_type(username_field, self.username)
+            time.sleep(1)
+            self.super_slow_type(username_field, self.username, 0.2, 0.5)
             logger.info("📧 Username saisi")
+            time.sleep(2)
 
-            # Mot de passe
             password_field = self.driver.find_element(By.NAME, "password")
             password_field.clear()
-            self.slow_type(password_field, self.password)
+            time.sleep(1)
+            self.super_slow_type(password_field, self.password, 0.15, 0.4)
             logger.info("🔑 Mot de passe saisi")
+            time.sleep(2)
 
-            # Connexion
+            # 4. Clic connexion avec délai aléatoire
             login_button = self.driver.find_element(By.XPATH, "//button[@type='submit']")
-            login_button.click()
-            logger.info("🖱️ Clic connexion")
+            self.driver.execute_script("arguments[0].click();", login_button)
+            logger.info("🖱️ Clic connexion JavaScript")
+            
+            # 5. Attendre longuement
+            time.sleep(12)
 
-            # Attendre connexion
-            time.sleep(6)
+            # 6. Gérer les popups
+            popup_selectors = [
+                "//button[contains(text(), 'Plus tard')]",
+                "//button[contains(text(), 'Not Now')]",
+                "//button[contains(text(), 'Annuler')]",
+                "//button[contains(text(), 'Plus tard')]",
+                "//div[contains(text(), 'Plus tard')]"
+            ]
+            
+            for selector in popup_selectors:
+                try:
+                    popup = self.driver.find_element(By.XPATH, selector)
+                    popup.click()
+                    time.sleep(2)
+                    logger.info("✅ Popup fermée")
+                    break
+                except:
+                    continue
 
-            # Sauvegarder les infos de connexion ?
-            try:
-                not_now_button = self.driver.find_element(By.XPATH, "//button[contains(text(), 'Plus tard')]")
-                not_now_button.click()
-                time.sleep(2)
-            except:
-                pass
-
-            # Vérifier connexion
+            # 7. Vérifier connexion réussie
             if "instagram.com" in self.driver.current_url and "login" not in self.driver.current_url:
                 logger.info("✅ CONNECTÉ À INSTAGRAM !")
                 return True
             else:
-                logger.error("❌ Échec connexion Instagram")
+                # Screenshot pour debug
+                try:
+                    self.driver.save_screenshot("/tmp/login_failed.png")
+                    logger.info("📸 Screenshot sauvegardé: /tmp/login_failed.png")
+                except:
+                    pass
+                logger.error("❌ Échec connexion - Redirection vers login")
                 return False
 
         except Exception as e:
-            logger.error(f"💥 ERREUR CONNEXION: {e}")
+            logger.error(f"💥 ERREUR CONNEXION DETAIL: {str(e)}")
             return False
 
-    def slow_type(self, element, text):
-        """Taper comme un humain"""
+    def super_slow_type(self, element, text, min_delay=0.1, max_delay=0.3):
+        """Taper EXTRÊMEMENT lentement comme un humain"""
         for char in text:
             element.send_keys(char)
-            time.sleep(random.uniform(0.1, 0.3))
+            time.sleep(random.uniform(min_delay, max_delay))
 
     def smart_follow_strategy(self, max_follows=50):
         """STRATÉGIE INTELLIGENTE DE FOLLOW"""
@@ -184,23 +225,23 @@ class UltimateInstagramBot:
             
             # Hashtags de niche (À PERSONNALISER)
             hashtags = [
-                "#musicproducer", "#djlife", "#edm", "#producer", "#beatmaker",
-                "#housemusic", "#techno", "#dancemusic", "#electronicmusic",
-                "#musicproduction", "#ableton", "#flstudio", "#musicmaker"
+                "musicproducer", "djlife", "edm", "producer", "beatmaker",
+                "housemusic", "techno", "dancemusic", "electronicmusic",
+                "musicproduction", "ableton", "flstudio", "musicmaker"
             ]
             
             follows_done = 0
             hashtag = random.choice(hashtags)
             
-            self.driver.get(f"https://www.instagram.com/explore/tags/{hashtag[1:]}/")
+            self.driver.get(f"https://www.instagram.com/explore/tags/{hashtag}/")
             time.sleep(5)
             
             # Ouvrir un post aléatoire
-            posts = self.driver.find_elements(By.XPATH, "//article//a")
+            posts = self.driver.find_elements(By.XPATH, "//article//a")[:9]
             if posts:
-                random_post = random.choice(posts[:9])  # Premiers 9 posts
+                random_post = random.choice(posts)
                 random_post.click()
-                time.sleep(3)
+                time.sleep(4)
                 
                 # Follow les utilisateurs qui ont liké/commenté
                 for _ in range(max_follows):
@@ -209,40 +250,46 @@ class UltimateInstagramBot:
                     
                     # Voir les likes
                     try:
-                        likes_link = self.driver.find_element(By.XPATH, "//a[contains(@href, 'liked_by')]")
+                        likes_link = self.wait.until(
+                            EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, 'liked_by')]"))
+                        )
                         likes_link.click()
-                        time.sleep(3)
+                        time.sleep(4)
                         
                         # Follow des utilisateurs dans la liste
-                        follow_buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Follow')]")
+                        follow_buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Follow')]")[:3]
                         
-                        for button in follow_buttons[:3]:  # Max 3 par post
+                        for button in follow_buttons:
                             try:
+                                if follows_done >= max_follows:
+                                    break
+                                    
                                 button.click()
                                 follows_done += 1
                                 logger.info(f"➕ FOLLOW #{follows_done} depuis hashtag {hashtag}")
                                 
                                 # Délai entre follows
                                 time.sleep(random.randint(12, 25))
-                                
-                                if follows_done >= max_follows:
-                                    break
                                     
                             except:
                                 continue
                                 
                         # Fermer la modal
-                        close_button = self.driver.find_element(By.XPATH, "//button[@aria-label='Close']")
-                        close_button.click()
+                        close_buttons = self.driver.find_elements(By.XPATH, "//button[@aria-label='Close']")
+                        if close_buttons:
+                            close_buttons[0].click()
                         time.sleep(2)
                         
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"⚠️ Erreur modal likes: {e}")
                     
                     # Passer au post suivant
-                    next_button = self.driver.find_element(By.XPATH, "//button[@aria-label='Next']")
-                    next_button.click()
-                    time.sleep(3)
+                    try:
+                        next_button = self.driver.find_element(By.XPATH, "//button[@aria-label='Next']")
+                        next_button.click()
+                        time.sleep(3)
+                    except:
+                        break
 
             return follows_done
             
@@ -264,23 +311,33 @@ class UltimateInstagramBot:
             follows_done = 0
             account = random.choice(similar_accounts)
             
-            self.driver.get(f"https://www.instagram.com/{account}/followers/")
-            time.sleep(5)
+            self.driver.get(f"https://www.instagram.com/{account}/")
+            time.sleep(4)
+            
+            # Cliquer sur followers
+            try:
+                followers_link = self.wait.until(
+                    EC.element_to_be_clickable((By.XPATH, f"//a[contains(@href, '/{account}/followers/')]"))
+                )
+                followers_link.click()
+                time.sleep(4)
+            except:
+                return 0
             
             # Scroll et follow des followers
-            for _ in range(3):  # 3 scrolls
+            for scroll_attempt in range(3):
                 follow_buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Follow')]")
                 
                 for button in follow_buttons[:min(4, max_follows - follows_done)]:
                     try:
+                        if follows_done >= max_follows:
+                            break
+                            
                         self.driver.execute_script("arguments[0].click();", button)
                         follows_done += 1
                         logger.info(f"➕ FOLLOW #{follows_done} depuis {account}")
                         
                         time.sleep(random.randint(15, 30))
-                        
-                        if follows_done >= max_follows:
-                            break
                             
                     except:
                         continue
@@ -307,9 +364,9 @@ class UltimateInstagramBot:
             time.sleep(5)
             
             follows_done = 0
-            follow_buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Follow')]")
+            follow_buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Follow')]")[:max_follows]
             
-            for button in follow_buttons[:max_follows]:
+            for button in follow_buttons:
                 try:
                     self.driver.execute_script("arguments[0].click();", button)
                     follows_done += 1
@@ -345,7 +402,7 @@ class UltimateInstagramBot:
                     for button in following_buttons[:min(5, max_unfollows - unfollows_done)]:
                         try:
                             button.click()
-                            time.sleep(1)
+                            time.sleep(2)
                             
                             # Confirmer l'unfollow
                             confirm_button = self.driver.find_element(By.XPATH, "//button[contains(text(), 'Unfollow')]")
@@ -387,11 +444,11 @@ class UltimateInstagramBot:
             # Scroll du feed
             for _ in range(5):
                 # Trouver les posts à engager
-                like_buttons = self.driver.find_elements(By.XPATH, "//span[@aria-label='Like']")
+                like_buttons = self.driver.find_elements(By.XPATH, "//span[@aria-label='Like']")[:3]
                 comment_buttons = self.driver.find_elements(By.XPATH, "//textarea[@aria-label='Add a comment…']")
                 
                 # Likes
-                for like in like_buttons[:3]:
+                for like in like_buttons:
                     if actions_done >= max_actions:
                         break
                     
@@ -404,7 +461,7 @@ class UltimateInstagramBot:
                         continue
                 
                 # Commentaires (occasionnels)
-                if random.random() < 0.2 and actions_done < max_actions:  # 20% de chance
+                if random.random() < 0.2 and actions_done < max_actions and comment_buttons:
                     try:
                         comment_box = random.choice(comment_buttons)
                         comment_box.click()
@@ -496,7 +553,8 @@ class InstagramGrowthBot:
             'followers_gained': 0,
             'completion_rate': 0,
             'days_remaining': 60,
-            'status': 'GROWTH_BOT_READY'
+            'status': 'GROWTH_BOT_READY',
+            'last_daily_reset': datetime.now().isoformat()
         }
         
         self.load_stats()
@@ -505,9 +563,9 @@ class InstagramGrowthBot:
         self.config = {
             'daily_follow_target': 167,
             'daily_unfollow_target': 100,
-            'max_follows_per_session': 50,
-            'max_unfollows_per_session': 30,
-            'engagement_actions_per_session': 20
+            'max_follows_per_session': 35,
+            'max_unfollows_per_session': 20,
+            'engagement_actions_per_session': 15
         }
 
     def load_stats(self):
@@ -568,7 +626,7 @@ class InstagramGrowthBot:
             logger.info("🔄 Compteurs quotidiens reset")
 
     def growth_session(self):
-        """SESSION COMPLÈTE DE CROISSANCE"""
+        """SESSION COMPLÈTE DE CROISSANCE AMÉLIORÉE"""
         logger.info("🚀 DÉMARRAGE SESSION CROISSANCE INSTAGRAM")
         
         if not self.safety_check():
@@ -582,6 +640,7 @@ class InstagramGrowthBot:
         
         try:
             if not bot.login():
+                logger.error("❌ Échec connexion - Session annulée")
                 return results
             
             time.sleep(3)
@@ -594,8 +653,9 @@ class InstagramGrowthBot:
                 )
                 results['follows'] = follows
                 bot.update_stats(follows=follows)
+                logger.info(f"✅ Follows réalisés: {follows}")
             
-            time.sleep(random.randint(30, 60))
+            time.sleep(random.randint(20, 40))
             
             # 2. UNFOLLOW STRATÉGY (si nécessaire)
             if random.random() < 0.6:  # 60% de chance de unfollow
@@ -604,14 +664,16 @@ class InstagramGrowthBot:
                 )
                 results['unfollows'] = unfollows
                 bot.update_stats(unfollows=unfollows)
+                logger.info(f"✅ Unfollows réalisés: {unfollows}")
             
-            time.sleep(random.randint(20, 40))
+            time.sleep(random.randint(15, 30))
             
             # 3. ENGAGEMENT ACTIONS
             engagement = bot.engagement_actions(
                 max_actions=self.config['engagement_actions_per_session']
             )
             results['engagement'] = engagement
+            logger.info(f"✅ Engagements réalisés: {engagement}")
             
             logger.info(f"🎯 SESSION CROISSANCE TERMINÉE: {results}")
             return results
@@ -620,7 +682,10 @@ class InstagramGrowthBot:
             logger.error(f"💥 ERREUR SESSION: {e}")
             return results
         finally:
-            bot.close()
+            try:
+                bot.close()
+            except:
+                pass
 
     def get_detailed_stats(self):
         """Statistiques détaillées"""
@@ -653,14 +718,13 @@ def home():
     <br><a href="/stats">📊 Voir la progression</a>
     <br><a href="/start-now">🚀 Démarrer maintenant</a>
     <br><a href="/strategy">🎯 Voir la stratégie</a>
+    <br><a href="/test-login">🔐 Tester la connexion</a>
     """
 
 @app.route('/stats')
 def stats():
-    bot = app.config.get('bot')
-    if bot:
-        return bot.get_detailed_stats()
-    return {"status": "ready", "message": "Bot croissance prêt - Utilisez /start-now"}
+    bot = InstagramGrowthBot()
+    return bot.get_detailed_stats()
 
 @app.route('/health')
 def health():
@@ -681,7 +745,6 @@ def start_now():
             }
         
         results = bot.growth_session()
-        app.config['bot'] = bot
         
         return {
             "status": "success",
@@ -694,6 +757,25 @@ def start_now():
         logger.error(f"❌ Erreur démarrage: {e}")
         return {"status": "error", "message": str(e)}
 
+@app.route('/test-login')
+def test_login():
+    """Test de connexion seul"""
+    try:
+        logger.info("🔐 TEST CONNEXION MANUEL")
+        bot = UltimateInstagramBot()
+        success = bot.login()
+        bot.close()
+        
+        return {
+            "login_success": success,
+            "message": "✅ Connexion réussie" if success else "❌ Échec connexion",
+            "next_step": "Vérifiez les logs pour les détails",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"💥 Erreur test connexion: {e}")
+        return {"error": str(e)}
+
 @app.route('/strategy')
 def show_strategy():
     """Afficher la stratégie de croissance"""
@@ -702,7 +784,7 @@ def show_strategy():
         "stratégie_quotidienne": {
             "follows": "167 par jour",
             "unfollows": "100 par jour", 
-            "engagement": "20 actions par session"
+            "engagement": "15 actions par session"
         },
         "plannings_horaires": {
             "activité": "24H/24 SAUF 13h-15h",
