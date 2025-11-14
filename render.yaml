@@ -1,0 +1,54 @@
+# render.yaml
+
+services:
+  # Service principal Instagram Growth Bot
+  - type: web
+    name: instagram-growth-bot
+    env: python
+    plan: free
+    region: frankfurt  # Ou "oregon" si plus proche de vous
+    branch: main
+    
+    # Build Configuration
+    buildCommand: |-
+      pip install -r requirements.txt
+      # Installation de Chrome pour Selenium
+      apt-get update && apt-get install -y wget curl unzip
+      wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+      echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+      apt-get update && apt-get install -y google-chrome-stable
+      
+    startCommand: python app.py
+    
+    # Environment Variables
+    envVars:
+      - key: INSTAGRAM_USERNAME
+        value: del.una99  # ⚠️ À MODIFIER
+      - key: INSTAGRAM_PASSWORD  
+        value: precieux243   # ⚠️ À MODIFIER
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: RENDER
+        value: true
+    
+    # Health Check
+    healthCheckPath: /health
+    initialDeployHook: |-
+      echo "🚀 Déploiement Instagram Growth Bot en cours..."
+      echo "🎯 Objectif: 10K followers en 60 jours"
+      echo "🕒 Actif 24h/24 sauf 13h-15h"
+
+    # Auto-deploy from GitHub
+    autoDeploy: true
+
+  # (Optionnel) Service de base de données pour les statistiques
+  - type: pserv
+    name: instagram-stats-db
+    env: docker
+    plan: free
+    region: frankfurt
+    ipAllowList: []
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
